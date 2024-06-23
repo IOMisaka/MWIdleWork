@@ -7,6 +7,7 @@
 
 已有Tampermonkey，点击安装：
 + [Github](https://github.com/IOMisaka/MWIdleWork/raw/main/idlework.user.js)
++ [GreasyFork](https://greasyfork.org/zh-CN/scripts/498630-mwidlework)
 
 # 使用方法
 执行任意指令后点击左上角的保存按钮
