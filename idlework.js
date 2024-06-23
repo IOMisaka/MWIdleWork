@@ -11,15 +11,18 @@
 (() => {
     "use strict";
 
-    let currentActionsHridList = [];
+    let settings = {
+        idleActionStr : null,
+        idleOn : false,
+    };
+    let idleSend = null;
+    let lastActionStr = null;
+
+    loadSettings();
 
     hookWS();
     hookSend();
 
-    var lastActionStr = null;
-    var idleActionStr = null;
-    var idleOn = false;
-    var idleSend = null;
     function hookSend() {
         var oriSend = WebSocket.prototype.send;
         WebSocket.prototype.send = function (data) {
@@ -34,7 +37,7 @@
         }
     }
     function updateAction(data) {
-        lastActionStr = data;
+        if(data)lastActionStr = data;
 
         let idlediv = document.querySelector("#script_idlediv");
         if (idlediv)return;
@@ -53,24 +56,35 @@
         div.style.zIndex = "9999";
 
         let txtInfo = document.createElement("span");
-        txtInfo.innerHTML = "开启";
+        txtInfo.innerText = "开启";
+
+        let txtSaved = document.createElement("span");
+        txtSaved.innerText = getActionFromStr(settings.idleActionStr);
 
         let checkIdle = document.createElement("input");
         checkIdle.type = "checkbox";
-        checkIdle.onchange = () => { idleOn = checkIdle.checked; }
+        checkIdle.checked = settings.idleOn;
+        checkIdle.onchange = () => { 
+            
+            settings.idleOn = checkIdle.checked;
+            if(!settings.idleOn)txtSaved.innerText="";
 
-
-        let txtSaved = document.createElement("span");
-        txtSaved.innerHTML = "";
+            save();
+        }
 
         let buttonSave = document.createElement("button");
         buttonSave.innerText = "保存指令";
         buttonSave.onclick = () => {
-            idleActionStr = lastActionStr;
-            var obj = JSON.parse(idleActionStr);
-            console.log("保存指令：",idleActionStr);
-            txtSaved.innerHTML = obj.newCharacterActionData.actionHrid;
+            settings.idleActionStr = lastActionStr;
+            console.log("保存指令：",lastActionStr);
+            txtSaved.innerText = getActionFromStr(lastActionStr);
+            
             checkIdle.checked = true;
+
+            settings.idleOn = checkIdle.checked; 
+            if(!settings.idleOn)txtSaved.innerText="";
+
+            save();
         };
 
         div.appendChild(txtInfo);
@@ -80,10 +94,16 @@
 
         document.querySelector("body").appendChild(div);
     }
+    function getActionFromStr(str){
+        if(!str)return "";
+        var obj = JSON.parse(str);
+        if(!obj)return "";
+        return obj.newCharacterActionData.actionHrid;
+    }
     function doIdle() {
         console.log("空闲");
-        if (idleOn && idleActionStr && idleSend) {
-            idleSend(idleActionStr);
+        if (settings.idleOn && settings.idleActionStr && idleSend) {
+            idleSend(settings.idleActionStr);
             return true;
         }
         return false;
@@ -115,6 +135,7 @@
     function handleMessage(message) {
         let obj = JSON.parse(message);
         if (obj && obj.type === "actions_updated") {
+            let currentActionsHridList = [];
             for (const action of obj.endCharacterActions) {
                 if (action.isDone === false) {
                     currentActionsHridList.push(action);
@@ -128,6 +149,18 @@
                 doIdle();
             }
         }
+        updateAction();
         return message;
+    }
+
+    function save(){
+        localStorage.setItem("script_idlework", JSON.stringify(settings));
+    }
+    function loadSettings(){
+        let o = localStorage.getItem("script_idlework");
+        if(o){
+            settings=JSON.parse(o);
+
+        }
     }
 })();
