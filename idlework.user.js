@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.0.0
+// @version      2.0.1
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -26,6 +26,23 @@
     hookWS();
     hookSend();
     let clientQueue = [];
+
+    const icons = {
+        "milking": "🐄",
+        "foraging": "🍄",
+        "woodcutting": "🌳",
+        "cheesesmithing": "🧀",
+        "crafting": "🖐️",
+        "tailoring": "🧵",
+        "cooking": "🧑‍🍳",
+        "brewing": "🍵",
+        "enhancing": "🛠️",
+        "combat": "⚔️"
+    };
+    function transIcon(str){
+        let action = str.split("/")[2];
+        return icons[action]??"🏀";
+    }
     function enqueue(data){
         let div = document.querySelector("#script_idlediv");
         if(!div){
@@ -37,7 +54,7 @@
 
         let button = document.createElement("button");
         
-        button.innerText=obj.newCharacterActionData.hasMaxCount?obj.newCharacterActionData.maxCount:"♾️";
+        button.innerText=transIcon(obj.newCharacterActionData.actionHrid)+(obj.newCharacterActionData.hasMaxCount?obj.newCharacterActionData.maxCount:"♾️");
         button.title=obj.newCharacterActionData.actionHrid;
 
         div.appendChild(button);
@@ -255,9 +272,6 @@
     };
 
     async function handleActionPanelAdd(panel) {
-        if (!panel.querySelector("div.SkillActionDetail_expGain__F5xHu")) {
-            return; // 不处理战斗ActionPanel
-        }
         let buttons = panel.querySelector("div.SkillActionDetail_buttonsContainer__sbg-V");
         if(buttons){
             console.log(buttons);
