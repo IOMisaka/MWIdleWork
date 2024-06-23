@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.0.1
+// @version      2.0.2
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -18,7 +18,7 @@
     };
     let idleSend = null;
     let lastActionStr = null;
-    
+
     let clientQueueOn = false;
 
     loadSettings();
@@ -39,48 +39,50 @@
         "enhancing": "🛠️",
         "combat": "⚔️"
     };
-    function transIcon(str){
+    function transIcon(str) {
         let action = str.split("/")[2];
-        return icons[action]??"🏀";
+        return icons[action] ?? "🏀";
     }
-    function enqueue(data){
+    function enqueue(data) {
         let div = document.querySelector("#script_idlediv");
-        if(!div){
+        if (!div) {
             console.log("没有找到面板");
             return;
         }
         let obj = JSON.parse(data);
-        if(!obj || obj.type!=="new_character_action")return;
+        if (!obj || obj.type !== "new_character_action") return;
 
         let button = document.createElement("button");
-        
-        button.innerText=transIcon(obj.newCharacterActionData.actionHrid)+(obj.newCharacterActionData.hasMaxCount?obj.newCharacterActionData.maxCount:"♾️");
-        button.title=obj.newCharacterActionData.actionHrid;
+
+        const{desc,icon,count}=getDescIconCountFromStr(data);
+        button.innerText = icon+count;
+        button.title = desc;
+        button.style.display="inline";
 
         div.appendChild(button);
         let ele = {
-            button:button,
-            data:data
+            button: button,
+            data: data
         }
-        button.onclick=()=>{removeQueue(ele)};
+        button.onclick = () => { removeQueue(ele) };
         clientQueue.push(ele);
     }
-    function removeQueue(ele){
-        clientQueue = clientQueue.filter(item=>item!==ele);
+    function removeQueue(ele) {
+        clientQueue = clientQueue.filter(item => item !== ele);
 
         let div = document.querySelector("#script_idlediv");
-        if(!div){
+        if (!div) {
             console.log("没有找到面板");
             return;
         }
 
         div.removeChild(ele.button);
-        
+
     }
     //移除button 返回数据
-    function dequeue(){
+    function dequeue() {
         let div = document.querySelector("#script_idlediv");
-        if(!div){
+        if (!div) {
             console.log("没有找到面板");
             return;
         }
@@ -98,10 +100,10 @@
                 updateAction(data);
             }
             let _this = this;
-            if(clientQueueOn){
-                console.log("client queue add:",data);
+            if (clientQueueOn) {
+                console.log("client queue add:", data);
                 enqueue(data);
-            }else
+            } else
                 oriSend.call(this, data);
             idleSend = function (e) { oriSend.call(_this, e) }
         }
@@ -117,7 +119,7 @@
         div.title = "保存最后指令";
         div.style.border = "1px solid";
         div.style.borderColor = "grey";
-        div.style.backgroundColor = "rgb(255 38 100)";
+        div.style.backgroundColor = "rgb(33 76 141)";
         div.style.color = "white";
         div.style.borderRadius = "2px";
         div.style.left = "0px";
@@ -125,57 +127,65 @@
         div.style.position = "fixed";
         div.style.zIndex = "9999";
 
-        let txtInfo = document.createElement("span");
-        txtInfo.innerText = "开启";
-
         let txtSaved = document.createElement("span");
-        txtSaved.innerText = getActionFromStr(settings.idleActionStr);
+
+        const{desc,icon,count} = getDescIconCountFromStr(settings.idleActionStr);
+        txtSaved.title = desc;
+        txtSaved.innerText = icon+count;
 
         let checkIdle = document.createElement("input");
         checkIdle.type = "checkbox";
         checkIdle.checked = settings.idleOn;
         checkIdle.onchange = () => {
-
             settings.idleOn = checkIdle.checked;
-            txtSaved.style.display = settings.idleOn ? "inline" : "none";
-
             save();
         }
 
         let buttonSave = document.createElement("button");
-        buttonSave.innerText = "保存指令";
+        buttonSave.innerText = "保存";
+        buttonSave.style.display="inline";
         buttonSave.onclick = () => {
+
             settings.idleActionStr = lastActionStr;
-            console.log("保存指令：", lastActionStr);
-            txtSaved.innerText = getActionFromStr(lastActionStr);
+            console.log("保存", lastActionStr);
+
+            const {desc,icon,count} = getDescIconCountFromStr(lastActionStr);
+            txtSaved.title = desc;
+            txtSaved.innerText = icon+count;
 
             checkIdle.checked = true;
-
             settings.idleOn = checkIdle.checked;
-            txtSaved.style.display = settings.idleOn ? "inline" : "none";
-
             save();
         };
 
-        div.appendChild(txtInfo);
+        let txtQueue = document.createElement("span");
+        txtQueue.innerText = "队列->";
+
         div.appendChild(checkIdle);
-        div.appendChild(buttonSave);
         div.appendChild(txtSaved);
+        div.appendChild(buttonSave);
+
+        div.appendChild(txtQueue);
 
         document.querySelector("body").appendChild(div);
     }
-    function getActionFromStr(str) {
-        if (!str) return "";
+    function getDescIconCountFromStr(str) {
+        let desc = "";
+        if (!str) desc = "";
         var obj = JSON.parse(str);
-        if (!obj) return "";
-        return obj.newCharacterActionData.actionHrid;obj.newCharacterActionData.count
+        if (!obj) desc = "";
+
+        let icon = transIcon(obj.newCharacterActionData.actionHrid);
+        let count = obj.newCharacterActionData.hasMaxCount?obj.newCharacterActionData.maxCount:"♾️";
+        desc = obj.newCharacterActionData.actionHrid;
+        return {desc,icon,count};
     }
     function doIdle() {
         console.log("空闲");
-        if(clientQueue.length>0){//队列
+        if (clientQueue.length > 0) {//队列
             idleSend(dequeue());
             return true;
-        }else if (settings.idleOn && settings.idleActionStr && idleSend) {//空闲任务
+        } else if (settings.idleOn && settings.idleActionStr && idleSend) {//空闲任务
             idleSend(settings.idleActionStr);
             return true;
         }
@@ -255,7 +265,7 @@
                             handleActionPanelAdd(added.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY"));
                         }
                     }
-                    for (const rm of mutation.removedNodes){
+                    for (const rm of mutation.removedNodes) {
                         if (
                             rm?.classList?.contains("Modal_modalContainer__3B80m") &&
                             rm.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY")
@@ -273,17 +283,17 @@
 
     async function handleActionPanelAdd(panel) {
         let buttons = panel.querySelector("div.SkillActionDetail_buttonsContainer__sbg-V");
-        if(buttons){
+        if (buttons) {
             console.log(buttons);
             let html = '<div><input type="checkbox" id="script_clientQueue"><span>加入闲时队列</span></div>';
-            buttons.insertAdjacentHTML("afterend",html);
+            buttons.insertAdjacentHTML("afterend", html);
             let checkClientQueue = panel.querySelector("#script_clientQueue");
-            checkClientQueue.onclick=()=>{
+            checkClientQueue.onclick = () => {
                 clientQueueOn = checkClientQueue.checked;
             }
         }
     }
-    async function handleActionPanelRemove(panel){
+    async function handleActionPanelRemove(panel) {
         clientQueueOn = false;
     }
 })();
