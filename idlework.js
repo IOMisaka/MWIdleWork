@@ -67,7 +67,7 @@
         checkIdle.onchange = () => { 
             
             settings.idleOn = checkIdle.checked;
-            if(!settings.idleOn)txtSaved.innerText="";
+            txtSaved.style.display=settings.idleOn?"inline":"none";
 
             save();
         }
@@ -82,7 +82,7 @@
             checkIdle.checked = true;
 
             settings.idleOn = checkIdle.checked; 
-            if(!settings.idleOn)txtSaved.innerText="";
+            txtSaved.style.display=settings.idleOn?"inline":"none";
 
             save();
         };
