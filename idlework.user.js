@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.0.1
 // @description  闲时工作 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
