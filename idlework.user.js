@@ -132,11 +132,10 @@
             return handleMessage(message);
         }
     }
-
+    let currentActionsHridList = [];
     function handleMessage(message) {
         let obj = JSON.parse(message);
         if (obj && obj.type === "actions_updated") {
-            let currentActionsHridList = [];
             for (const action of obj.endCharacterActions) {
                 if (action.isDone === false) {
                     currentActionsHridList.push(action);
