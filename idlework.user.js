@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.0.2
+// @version      2.0.3
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -171,12 +171,18 @@
     }
     function getDescIconCountFromStr(str) {
         let desc = "";
-        if (!str) desc = "";
+        let icon = "";
+        let count = "";
+        if (!str){ 
+            return {desc,icon,count};
+        }
         var obj = JSON.parse(str);
-        if (!obj) desc = "";
+        if (!obj || obj.type!=="new_character_action"){ 
+            return {desc,icon,count};
+        }
 
-        let icon = transIcon(obj.newCharacterActionData.actionHrid);
-        let count = obj.newCharacterActionData.hasMaxCount?obj.newCharacterActionData.maxCount:"♾️";
+        icon = transIcon(obj.newCharacterActionData.actionHrid);
+        count = obj.newCharacterActionData.hasMaxCount?obj.newCharacterActionData.maxCount:"♾️";
         desc = obj.newCharacterActionData.actionHrid;
         return {desc,icon,count};
     }
