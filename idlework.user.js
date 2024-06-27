@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.0.3
+// @version      2.0.4
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
 // @match        https://test.milkywayidle.com/*
+// @grant        GM_notification
 // @license      MIT
 // ==/UserScript==
 
@@ -15,6 +16,7 @@
     let settings = {
         idleActionStr: null,
         idleOn: false,
+        buffNotify:false
     };
     let idleSend = null;
     let lastActionStr = null;
@@ -133,6 +135,17 @@
         txtSaved.title = desc;
         txtSaved.innerText = icon+count;
 
+        let checkBuff = document.createElement("input");
+        checkBuff.type = "checkbox";
+        checkBuff.checked = settings.buffNotify;
+        checkBuff.onchange = () => {
+            settings.buffNotify = checkBuff.checked;
+            save();
+        }
+        let txtBuff = document.createElement("span");
+        txtBuff.innerText = "🔔";
+        checkBuff.title = txtBuff.title = txtBuff.title = "社区buff提醒";
+
         let checkIdle = document.createElement("input");
         checkIdle.type = "checkbox";
         checkIdle.checked = settings.idleOn;
@@ -160,6 +173,9 @@
 
         let txtQueue = document.createElement("span");
         txtQueue.innerText = "队列->";
+
+        div.appendChild(checkBuff);
+        div.appendChild(txtBuff);
 
         div.appendChild(checkIdle);
         div.appendChild(txtSaved);
@@ -239,6 +255,13 @@
             if (currentActionsHridList.length == 0) {
                 doIdle();
             }
+        }else if(obj && obj.type==="community_buffs_updated" && settings.buffNotify){
+            if (typeof GM_notification === "undefined" || !GM_notification) {
+                console.error("notificate null GM_notification");
+            }else GM_notification({
+                text:"社区buff更新",
+                title:"MWIdleWork"
+            });
         }
         updateAction();
         return message;
@@ -251,7 +274,6 @@
         let o = localStorage.getItem("script_idlework");
         if (o) {
             settings = JSON.parse(o);
-
         }
     }
 
