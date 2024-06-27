@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.0.4
+// @version      2.0.5
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -118,7 +118,6 @@
 
         let div = document.createElement("div");
         div.id = "script_idlediv";
-        div.title = "保存最后指令";
         div.style.border = "1px solid";
         div.style.borderColor = "grey";
         div.style.backgroundColor = "rgb(33 76 141)";
@@ -149,6 +148,7 @@
         let checkIdle = document.createElement("input");
         checkIdle.type = "checkbox";
         checkIdle.checked = settings.idleOn;
+        checkIdle.title = "闲时执行";
         checkIdle.onchange = () => {
             settings.idleOn = checkIdle.checked;
             save();
@@ -157,6 +157,7 @@
         let buttonSave = document.createElement("button");
         buttonSave.innerText = "保存";
         buttonSave.style.display="inline";
+        buttonSave.title = "保存最后指令";
         buttonSave.onclick = () => {
 
             settings.idleActionStr = lastActionStr;
@@ -202,13 +203,19 @@
         desc = obj.newCharacterActionData.actionHrid;
         return {desc,icon,count};
     }
+    let sendLimit=false;
     function doIdle() {
         console.log("空闲");
         if (clientQueue.length > 0) {//队列
             idleSend(dequeue());
             return true;
         } else if (settings.idleOn && settings.idleActionStr && idleSend) {//空闲任务
-            idleSend(settings.idleActionStr);
+            sendLimit = true;
+            setTimeout(() => {
+                idleSend(settings.idleActionStr);
+                sendLimit=false;
+            }, Math.random()*500+500);
+            
             return true;
         }
         return false;
