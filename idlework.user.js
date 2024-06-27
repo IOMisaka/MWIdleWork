@@ -48,7 +48,7 @@
     function enqueue(data) {
         let div = document.querySelector("#script_idlediv");
         if (!div) {
-            console.log("没有找到面板");
+            console.error("没有找到面板");
             return;
         }
         let obj = JSON.parse(data);
@@ -74,7 +74,7 @@
 
         let div = document.querySelector("#script_idlediv");
         if (!div) {
-            console.log("没有找到面板");
+            console.error("没有找到面板");
             return;
         }
 
@@ -85,7 +85,7 @@
     function dequeue() {
         let div = document.querySelector("#script_idlediv");
         if (!div) {
-            console.log("没有找到面板");
+            console.error("没有找到面板");
             return;
         }
 
@@ -296,7 +296,6 @@
     const waitForActionPanelParent = () => {
         const targetNode = document.querySelector("div.GamePage_mainPanel__2njyb");
         if (targetNode) {
-            console.log("start observe action panel");
             const actionPanelObserver = new MutationObserver(async function (mutations) {
                 for (const mutation of mutations) {
                     for (const added of mutation.addedNodes) {
@@ -326,7 +325,6 @@
     async function handleActionPanelAdd(panel) {
         let buttons = panel.querySelector("div.SkillActionDetail_buttonsContainer__sbg-V");
         if (buttons) {
-            console.log(buttons);
             let html = '<div><input type="checkbox" id="script_clientQueue"><span>加入闲时队列</span></div>';
             buttons.insertAdjacentHTML("afterend", html);
             let checkClientQueue = panel.querySelector("#script_clientQueue");
