@@ -212,8 +212,8 @@
         } else if (settings.idleOn && settings.idleActionStr && idleSend) {//空闲任务
             sendLimit = true;
             setTimeout(() => {
-                idleSend(settings.idleActionStr);
                 sendLimit=false;
+                idleSend(settings.idleActionStr);
             }, Math.random()*500+500);
             
             return true;
@@ -266,8 +266,15 @@
             if (typeof GM_notification === "undefined" || !GM_notification) {
                 console.error("notificate null GM_notification");
             }else GM_notification({
-                text:"社区buff更新",
-                title:"MWIdleWork"
+                text:"🔔社区buff有更新",
+                title:"银河奶牛",
+                timeout:60000,
+                silent:false,
+                highlight:true,
+                tag: "MWIdleWork",
+                onclick: () => {
+                    window.focus();
+                }
             });
         }
         updateAction();
