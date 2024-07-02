@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.0.5
+// @version      2.0.6
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -247,6 +247,7 @@
     function handleMessage(message) {
         let obj = JSON.parse(message);
         if (obj && obj.type === "init_character_data") {
+            currentActionsHridList = [...obj.characterActions];
             waitForActionPanelParent();
         }
         else if (obj && obj.type === "actions_updated") {
