@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.1.0
+// @version      2.1.1
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -119,6 +119,7 @@
 
             if(recording){
                 records.push(data);
+                document.getElementById("script_buttonRecord").innerText="⏹️停止("+records.length+")";
             }
         }
     }
@@ -194,12 +195,14 @@
         div.appendChild(recordsDiv);
         
         let buttonRecord = document.createElement("button");
-        buttonRecord.innerText = "⏺";
+        buttonRecord.id="script_buttonRecord";
+        buttonRecord.innerText = "⏺录制";
         buttonRecord.title = "录制一系列操作";
         buttonRecord.onclick=()=>{
             if(recording){
                 recording = false;
-                buttonRecord.innerText = "⏺";
+                buttonRecord.innerText = "⏺录制";
+                buttonRecord.title = "录制一系列操作";
                 let name = prompt("保存名字","操作"+Object.keys(settings.recordsDict).length);
                 settings.recordsDict[name]=records;
                 records=[];
@@ -207,7 +210,8 @@
                 refreshRecords();
             }else{
                 recording=true;
-                buttonRecord.innerText="⏹️";
+                buttonRecord.innerText="⏹️停止";
+                buttonRecord.title = "停止录制动作";
             }
         }
         div.appendChild(buttonRecord);
@@ -237,7 +241,7 @@
                     let obj = JSON.parse(cmds[i]);
                     if(obj.type === "equip_item"){
                         let data = cmds[i];
-                        setTimeout(()=>idleSend(data),i*300);//避免一次发太多
+                        setTimeout(()=>idleSend(data),i*500);//避免一次发太多
                     }else{
                         enqueue(cmds[i]);
                     }
