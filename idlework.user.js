@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.0.6
+// @version      2.1.0
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -16,8 +16,12 @@
     let settings = {
         idleActionStr: null,
         idleOn: false,
-        buffNotify:false
+        buffNotify:false,
+        recordsDict:{}
     };
+    let recording = false;
+    let records=[];
+
     let idleSend = null;
     let lastActionStr = null;
 
@@ -45,6 +49,9 @@
         let action = str.split("/")[2];
         return icons[action] ?? "🏀";
     }
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
     function enqueue(data) {
         let div = document.querySelector("#script_idlediv");
         if (!div) {
@@ -52,22 +59,23 @@
             return;
         }
         let obj = JSON.parse(data);
-        if (!obj || obj.type !== "new_character_action") return;
+        
+        if (!obj) return;
+        if(obj.type === "new_character_action"){//加入待办队列
+            let button = document.createElement("button");
+            const{desc,icon,count}=getDescIconCountFromStr(data);
+            button.innerText = icon+count;
+            button.title = desc;
+            button.style.display="inline";
 
-        let button = document.createElement("button");
-
-        const{desc,icon,count}=getDescIconCountFromStr(data);
-        button.innerText = icon+count;
-        button.title = desc;
-        button.style.display="inline";
-
-        div.appendChild(button);
-        let ele = {
-            button: button,
-            data: data
+            div.appendChild(button);
+            let ele = {
+                button: button,
+                data: data
+            }
+            button.onclick = () => { removeQueue(ele) };
+            clientQueue.push(ele);
         }
-        button.onclick = () => { removeQueue(ele) };
-        clientQueue.push(ele);
     }
     function removeQueue(ele) {
         clientQueue = clientQueue.filter(item => item !== ele);
@@ -98,9 +106,9 @@
         WebSocket.prototype.send = function (data) {
             if (data && data.indexOf("newCharacterActionData") > 0) {
                 let obj = JSON.parse(data);
-                console.log("最后发送指令:", data);
                 updateAction(data);
             }
+            console.log("发送指令:", data);
             let _this = this;
             if (clientQueueOn) {
                 console.log("client queue add:", data);
@@ -108,6 +116,10 @@
             } else
                 oriSend.call(this, data);
             idleSend = function (e) { oriSend.call(_this, e) }
+
+            if(recording){
+                records.push(data);
+            }
         }
     }
     function updateAction(data) {
@@ -175,6 +187,32 @@
         let txtQueue = document.createElement("span");
         txtQueue.innerText = "队列->";
 
+        //记录
+        let recordsDiv = document.createElement("div");
+        recordsDiv.id="script_recordsDiv";
+        recordsDiv.style.display="inline";
+        div.appendChild(recordsDiv);
+        
+        let buttonRecord = document.createElement("button");
+        buttonRecord.innerText = "⏺";
+        buttonRecord.title = "录制一系列操作";
+        buttonRecord.onclick=()=>{
+            if(recording){
+                recording = false;
+                buttonRecord.innerText = "⏺";
+                let name = prompt("保存名字","操作"+Object.keys(settings.recordsDict).length);
+                settings.recordsDict[name]=records;
+                records=[];
+                save();
+                refreshRecords();
+            }else{
+                recording=true;
+                buttonRecord.innerText="⏹️";
+            }
+        }
+        div.appendChild(buttonRecord);
+        //
+
         div.appendChild(checkBuff);
         div.appendChild(txtBuff);
 
@@ -185,9 +223,37 @@
         div.appendChild(txtQueue);
 
         document.querySelector("body").appendChild(div);
+        refreshRecords();
+    }
+    function refreshRecords(){
+        let recordsDiv = document.getElementById("script_recordsDiv");
+        recordsDiv.innerHTML="";
+        for(let key in settings.recordsDict){
+            let cmds = settings.recordsDict[key];
+            let actButton = document.createElement("button");
+            actButton.innerText = key;
+            actButton.onclick=()=>{
+                for(var i=0;i<cmds.length;i++){
+                    let obj = JSON.parse(cmds[i]);
+                    if(obj.type === "equip_item"){
+                        let data = cmds[i];
+                        setTimeout(()=>idleSend(data),i*300);//避免一次发太多
+                    }else{
+                        enqueue(cmds[i]);
+                    }
+                }
+            }
+            actButton.addEventListener("contextmenu",(event)=>{
+                event.preventDefault();
+                delete settings.recordsDict[key];
+                recordsDiv.removeChild(actButton);
+                save();
+            })
+            recordsDiv.appendChild(actButton);
+        }
     }
     function getDescIconCountFromStr(str) {
-        let desc = "";
+        let desc = "动作";
         let icon = "";
         let count = "";
         if (!str){ 
@@ -290,6 +356,7 @@
         if (o) {
             settings = JSON.parse(o);
         }
+        settings.recordsDict = settings.recordsDict || {};
     }
 
 
