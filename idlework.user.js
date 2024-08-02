@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.1.2
+// @version      2.2.0
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -12,26 +12,6 @@
 
 (() => {
     "use strict";
-
-    let settings = {
-        idleActionStr: null,
-        idleOn: false,
-        buffNotify:false,
-        recordsDict:{}
-    };
-    let recording = false;
-    let records=[];
-
-    let idleSend = null;
-    let lastActionStr = null;
-
-    let clientQueueOn = false;
-
-    loadSettings();
-
-    hookWS();
-    hookSend();
-    let clientQueue = [];
 
     const icons = {
         "milking": "🐄",
@@ -45,6 +25,27 @@
         "enhancing": "🛠️",
         "combat": "⚔️"
     };
+    
+    let settings = {
+        idleActionStr: null,
+        idleOn: false,
+        buffNotify:false,
+        recordsDict:{},
+        queue:[]
+    };
+    let recording = false;
+    let records=[];
+
+    let idleSend = null;
+    let lastActionStr = null;
+
+    let clientQueueOn = false;
+    let clientQueue = [];
+
+    loadSettings();
+    hookWS();
+    hookSend();
+
     function transIcon(str) {
         let action = str.split("/")[2];
         return icons[action] ?? "🏀";
@@ -76,6 +77,7 @@
             button.addEventListener("contextmenu",(event)=>removeQueue(ele));
             button.onclick = () => { upQueue(ele) };
             clientQueue.push(ele);
+            save();
         }
     }
     function upQueue(ele){
@@ -92,6 +94,7 @@
                 clientQueue.splice(index-1,0,ele);
             }
         }
+        save();
     }
     function removeQueue(ele) {
         clientQueue = clientQueue.filter(item => item !== ele);
@@ -115,6 +118,7 @@
 
         let ele = clientQueue.shift();
         div.removeChild(ele.button);
+        save();
         return ele.data;
     }
     function hookSend() {
@@ -254,13 +258,13 @@
             actButton.innerText = key;
             actButton.title = "左键执行，右键删除";
             actButton.onclick=()=>{
-                for(var i=0;i<cmds.length;i++){
+                for(let i=0;i<cmds.length;i++){
                     let obj = JSON.parse(cmds[i]);
+                    let data = cmds[i];
                     if(obj.type === "equip_item"){
-                        let data = cmds[i];
                         setTimeout(()=>idleSend(data),i*500);//避免一次发太多
                     }else{
-                        enqueue(cmds[i]);
+                        enqueue(data);
                     }
                 }
             }
@@ -370,6 +374,11 @@
     }
 
     function save() {
+        //save queue
+        let queue = [];
+        clientQueue.forEach(e=>queue.push(e.data));
+        settings.queue = queue;
+
         localStorage.setItem("script_idlework", JSON.stringify(settings));
     }
     function loadSettings() {
@@ -378,6 +387,10 @@
             settings = JSON.parse(o);
         }
         settings.recordsDict = settings.recordsDict || {};
+        settings.queue = settings.queue || [];
+
+        updateAction(settings.idleActionStr);
+        settings.queue.forEach(e => enqueue(e));
     }
 
 
