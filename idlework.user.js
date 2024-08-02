@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.2.0
+// @version      2.2.1
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-    "use strict";
+    "use strict"; 
 
     const icons = {
         "milking": "🐄",
@@ -74,7 +74,7 @@
                 button: button,
                 data: data
             }
-            button.addEventListener("contextmenu",(event)=>removeQueue(ele));
+            button.addEventListener("contextmenu",(event)=>{event.preventDefault();removeQueue(ele);});
             button.onclick = () => { upQueue(ele) };
             clientQueue.push(ele);
             save();
@@ -98,7 +98,8 @@
     }
     function removeQueue(ele) {
         clientQueue = clientQueue.filter(item => item !== ele);
-
+        save();
+        
         let div = document.querySelector("#script_idlediv");
         if (!div) {
             console.error("没有找到面板");
