@@ -65,7 +65,7 @@
             let button = document.createElement("button");
             const{desc,icon,count}=getDescIconCountFromStr(data);
             button.innerText = icon+count;
-            button.title = desc;
+            button.title = "左键前移，右键取消\n"+desc;
             button.style.display="inline";
 
             div.appendChild(button);
@@ -73,8 +73,24 @@
                 button: button,
                 data: data
             }
-            button.onclick = () => { removeQueue(ele) };
+            button.addEventListener("contextmenu",(event)=>removeQueue(ele));
+            button.onclick = () => { upQueue(ele) };
             clientQueue.push(ele);
+        }
+    }
+    function upQueue(ele){
+        let div = document.querySelector("#script_idlediv");
+        if (!div) {
+            console.error("没有找到面板");
+            return;
+        }
+        if(ele.button.previousElementSibling && ele.button.previousElementSibling.tagName==="BUTTON" ){
+            div.insertBefore(ele.button,ele.button.previousElementSibling);
+            let index = clientQueue.indexOf(ele);
+            if(index>0){
+                clientQueue.splice(index,1);
+                clientQueue.splice(index-1,0,ele);
+            }
         }
     }
     function removeQueue(ele) {
@@ -236,6 +252,7 @@
             let cmds = settings.recordsDict[key];
             let actButton = document.createElement("button");
             actButton.innerText = key;
+            actButton.title = "左键执行，右键删除";
             actButton.onclick=()=>{
                 for(var i=0;i<cmds.length;i++){
                     let obj = JSON.parse(cmds[i]);
