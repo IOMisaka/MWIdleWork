@@ -146,7 +146,7 @@
                     && initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.inputItems
                 ){
                     let outputItem = initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.outputItems[0];
-                    let actions = costs2actions({itemHrid:outputItem.itemHrid,count:outputItem.count*obj.newCharacterActionData.maxCount});
+                    let actions = costs2actions([{itemHrid:outputItem.itemHrid,count:outputItem.count*obj.newCharacterActionData.maxCount}]);
                     actions.forEach(action=>enqueue(JSON.stringify(action)));
                 }else enqueue(data);
             } else oriSend.call(this, data);
@@ -472,14 +472,28 @@
     async function handleActionPanelAdd(panel) {
         let buttons = panel.querySelector("div.SkillActionDetail_buttonsContainer__sbg-V");
         if (buttons) {
-            let html = '<div><input type="checkbox" id="script_clientQueue"><label for="script_clientQueue">加入闲时队列  </label><input type="checkbox" id="script_clientQueueDec"><label for="script_clientQueueDec">解析需求</label></div>';
+            let html = '<div><input type="checkbox" id="script_clientQueue"><label for="script_clientQueue">加入闲时队列  </label><input type="checkbox" id="script_clientQueueDec"><label id="script_clientQueueDecLabel" for="script_clientQueueDec">解析需求</label></div>';
             buttons.insertAdjacentHTML("afterend", html);
+
             let checkClientQueue = panel.querySelector("#script_clientQueue");
+            let checkClientQueueDec = panel.querySelector("#script_clientQueueDec");
+            let checkClientQueueDecLabel = panel.querySelector("#script_clientQueueDecLabel");
+
+            checkClientQueueDecLabel.title = "必须输入制作数量，才能分析需要的材料";
+            checkClientQueueDec.style.display="none";//默认隐藏
+            checkClientQueueDecLabel.style.display="none";
+
             checkClientQueue.onclick = () => {
                 clientQueueOn = checkClientQueue.checked;
+                if(clientQueueOn){
+                    checkClientQueueDec.style.display="initial";
+                    checkClientQueueDecLabel.style.display="initial";
+                }else{
+                    checkClientQueueDec.style.display="none";
+                    checkClientQueueDecLabel.style.display="none";
+                }
             }
 
-            let checkClientQueueDec = panel.querySelector("#script_clientQueueDec");
             checkClientQueueDec.onclick=()=>{
                 clientQueueDecOn = checkClientQueueDec.checked;
             }
@@ -549,7 +563,6 @@
         }
     }
     function deconstructItems(items){
-        debugger;
         let actionList=[];
         let inventoryPool={};
         items.forEach(item => {
@@ -557,7 +570,7 @@
         });
         return actionList;
     }
-    // {itemHrid:"/items/lumber",count:1}
+    // [{itemHrid:"/items/lumber",count:1}]
     function costs2actions(costs){
         let actions = deconstructItems(costs);
         return actions;
