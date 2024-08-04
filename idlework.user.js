@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.0
+// @version      2.3.1
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -118,7 +118,7 @@
         let div = document.querySelector("#script_idlediv");
         if (!div) {
             console.error("没有找到面板");
-            return;
+            return null;
         }
 
         let ele = clientQueue.shift();
@@ -220,9 +220,11 @@
             save();
         };
 
-        let txtQueue = document.createElement("span");
-        txtQueue.innerText = "队列->";
-
+        let clearQueue = document.createElement("button");
+        clearQueue.innerText = "🧹清空";
+        clearQueue.onclick=()=>{
+            while(dequeue());
+        }
         //记录
         let recordsDiv = document.createElement("div");
         recordsDiv.id="script_recordsDiv";
@@ -259,7 +261,7 @@
         div.appendChild(txtSaved);
         div.appendChild(buttonSave);
 
-        div.appendChild(txtQueue);
+        div.appendChild(clearQueue);
 
         document.querySelector("body").appendChild(div);
         refreshRecords();
