@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.1
+// @version      2.3.2
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -146,7 +146,8 @@
                     && initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.inputItems
                 ){
                     let outputItem = initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.outputItems[0];
-                    let actions = costs2actions([{itemHrid:outputItem.itemHrid,count:outputItem.count*obj.newCharacterActionData.maxCount}]);
+                    let currentCount = getItemCount(outputItem.itemHrid);
+                    let actions = costs2actions([{itemHrid:outputItem.itemHrid,count:outputItem.count*obj.newCharacterActionData.maxCount+currentCount}]);
                     actions.forEach(action=>enqueue(JSON.stringify(action)));
                 }else enqueue(data);
             } else oriSend.call(this, data);
@@ -221,7 +222,7 @@
         };
 
         let clearQueue = document.createElement("button");
-        clearQueue.innerText = "🧹清空";
+        clearQueue.innerText = "🧹清空队列->";
         clearQueue.onclick=()=>{
             while(dequeue());
         }
