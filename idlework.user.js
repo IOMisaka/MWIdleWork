@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.2.1
+// @version      2.3.0
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -41,6 +41,10 @@
 
     let clientQueueOn = false;
     let clientQueue = [];
+    let clientQueueDecOn = false;//自动解析
+
+    let initData_itemDetailMap = null;
+    let initData_actionDetailMap = null;
 
     loadSettings();
     hookWS();
@@ -99,7 +103,7 @@
     function removeQueue(ele) {
         clientQueue = clientQueue.filter(item => item !== ele);
         save();
-        
+
         let div = document.querySelector("#script_idlediv");
         if (!div) {
             console.error("没有找到面板");
@@ -125,17 +129,27 @@
     function hookSend() {
         var oriSend = WebSocket.prototype.send;
         WebSocket.prototype.send = function (data) {
+            let obj = JSON.parse(data);
             if (data && data.indexOf("newCharacterActionData") > 0) {
-                let obj = JSON.parse(data);
                 updateAction(data);
             }
             console.log("发送指令:", data);
             let _this = this;
             if (clientQueueOn) {
                 console.log("client queue add:", data);
-                enqueue(data);
-            } else
-                oriSend.call(this, data);
+                if(clientQueueDecOn 
+                    && obj && obj.type==="new_character_action" 
+                    && obj.newCharacterActionData 
+                    && obj.newCharacterActionData.hasMaxCount 
+                    && obj.newCharacterActionData.actionHrid
+                    && obj.newCharacterActionData.maxCount>0
+                    && initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.inputItems
+                ){
+                    let outputItem = initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.outputItems[0];
+                    let actions = costs2actions({itemHrid:outputItem.itemHrid,count:outputItem.count*obj.newCharacterActionData.maxCount});
+                    actions.forEach(action=>enqueue(JSON.stringify(action)));
+                }else enqueue(data);
+            } else oriSend.call(this, data);
             idleSend = function (e) { oriSend.call(_this, e) }
 
             if(recording){
@@ -336,11 +350,22 @@
         }
     }
     let currentActionsHridList = [];
+    let currentCharacterItems = [];
+    let initData_houseRoomDetailMap = null;
     function handleMessage(message) {
         let obj = JSON.parse(message);
         if (obj && obj.type === "init_character_data") {
             currentActionsHridList = [...obj.characterActions];
+            currentCharacterItems = obj.characterItems;
             waitForActionPanelParent();
+        }else if(obj && obj.type === "init_client_data"){
+            initData_itemDetailMap = obj.itemDetailMap;
+            initData_actionDetailMap = obj.actionDetailMap;
+            initData_houseRoomDetailMap = obj.houseRoomDetailMap;
+        }else if(obj && obj.endCharacterItems){
+            let newIds = obj.endCharacterItems.map(i=>i.id);
+            currentCharacterItems = currentCharacterItems.filter(e=>!newIds.includes(e.id));//移除存在的物品
+            currentCharacterItems.push(...obj.endCharacterItems);//放入新物品
         }
         else if (obj && obj.type === "actions_updated") {
             for (const action of obj.endCharacterActions) {
@@ -397,7 +422,7 @@
 
     /* 动作面板 */
     const waitForActionPanelParent = () => {
-        const targetNode = document.querySelector("div.GamePage_mainPanel__2njyb");
+        const targetNode = document.querySelector("div.GamePage_contentPanel__Zx4FH");
         if (targetNode) {
             const actionPanelObserver = new MutationObserver(async function (mutations) {
                 for (const mutation of mutations) {
@@ -408,6 +433,18 @@
                         ) {
                             handleActionPanelAdd(added.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY"));
                         }
+
+                        if (
+                            added?.classList?.contains("Modal_modalContainer__3B80m") &&
+                            added.querySelector("div.HousePanel_modalContent__2Zv1N")
+                        ) {
+                            handleHousePanelAdd(added.querySelector("div.HousePanel_modalContent__2Zv1N"));
+                        }
+                        if (
+                            added?.classList?.contains("Modal_modalContainer__3B80m")
+                        ){
+                            console.log(added);
+                        }
                     }
                     for (const rm of mutation.removedNodes) {
                         if (
@@ -415,6 +452,13 @@
                             rm.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY")
                         ) {
                             handleActionPanelRemove(rm.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY"));
+                        }
+
+                        if (
+                            rm?.classList?.contains("Modal_modalContainer__3B80m") &&
+                            rm.querySelector("div.HousePanel_modalContent__2Zv1N")
+                        ) {
+                            handleHousePanelRemove(rm.querySelector("div.HousePanel_modalContent__2Zv1N"));
                         }
                     }
                 }
@@ -428,15 +472,130 @@
     async function handleActionPanelAdd(panel) {
         let buttons = panel.querySelector("div.SkillActionDetail_buttonsContainer__sbg-V");
         if (buttons) {
-            let html = '<div><input type="checkbox" id="script_clientQueue"><span>加入闲时队列</span></div>';
+            let html = '<div><input type="checkbox" id="script_clientQueue"><label for="script_clientQueue">加入闲时队列  </label><input type="checkbox" id="script_clientQueueDec"><label for="script_clientQueueDec">解析需求</label></div>';
             buttons.insertAdjacentHTML("afterend", html);
             let checkClientQueue = panel.querySelector("#script_clientQueue");
             checkClientQueue.onclick = () => {
                 clientQueueOn = checkClientQueue.checked;
             }
+
+            let checkClientQueueDec = panel.querySelector("#script_clientQueueDec");
+            checkClientQueueDec.onclick=()=>{
+                clientQueueDecOn = checkClientQueueDec.checked;
+            }
         }
     }
     async function handleActionPanelRemove(panel) {
         clientQueueOn = false;
+        clientQueueDecOn = false;
+    }
+    function createObj(actionHrid,count){
+        return {
+            "type": "new_character_action",
+            "newCharacterActionData": {
+                "actionHrid": actionHrid,
+                "hasMaxCount": true,
+                "maxCount": count,
+                "upgradeItemHash": "",
+                "enhancingMaxLevel": 0,
+                "enhancingProtectionItemHash": "",
+                "enhancingProtectionItemMinLevel": 0,
+                "shouldClearQueue": false
+            }
+        }
+    }
+    function deconstructItem(item,actionList,inventoryPool){
+        let count = 0;
+        if(inventoryPool.hasOwnProperty(item.itemHrid)){
+            count=inventoryPool[item.itemHrid];
+        }else{
+            count=getItemCount(item.itemHrid);
+            inventoryPool[item.itemHrid]=count;
+        }
+        if(count>=item.count){//本材料足够，不用做
+            count-=item.count;
+            inventoryPool[item.itemHrid] = count;
+        }else{//材料不够
+            let need = item.count-count;
+            inventoryPool[item.itemHrid] = 0;
+
+            let act = Object.entries(initData_actionDetailMap).find(([k,v])=>v.outputItems?.[0]?.itemHrid===item.itemHrid);//找到产出该材料的动作（合成
+            let nop;
+            if(act){
+                [nop,act] = act;//解构
+                //做材料
+                act.inputItems.forEach(ii=>{
+                    let icount = need/act.outputItems[0].count*ii.count;//材料数量=需求量/每次产出*输入个数
+                    deconstructItem({itemHrid:ii.itemHrid,count:icount},actionList,inventoryPool);
+                });
+
+                //加入待做列表
+                let times = Math.ceil(need/act.outputItems[0].count);
+                if(times>0){
+                    let data = createObj(act.hrid,times);
+                    console.log(`加入：${act.hrid}+${times}`);
+                    actionList.push(data);
+                }
+            }else{
+                [nop,act] = Object.entries(initData_actionDetailMap).find(([k,v])=>v.dropTable?.[0]?.itemHrid===item.itemHrid&&v.dropTable?.[0]?.dropRate===1);//基础采集
+                let perCount = (act.dropTable[0].minCount+act.dropTable[0].maxCount)/2;//每次采集期望
+                let times = Math.ceil(need/perCount);
+                if(times>0){
+                    let data = createObj(act.hrid,times);
+                    console.log(`加入：${act.hrid}+${times}`);
+                    actionList.push(data);
+                }
+            }
+        }
+    }
+    function deconstructItems(items){
+        debugger;
+        let actionList=[];
+        let inventoryPool={};
+        items.forEach(item => {
+            deconstructItem(item,actionList,inventoryPool);
+        });
+        return actionList;
+    }
+    // {itemHrid:"/items/lumber",count:1}
+    function costs2actions(costs){
+        let actions = deconstructItems(costs);
+        return actions;
+    }
+    function getItemCount(itemHrid){
+        return currentCharacterItems.find(item=>item.itemHrid===itemHrid)?.count||0;
+    }
+    function costs2needs(costs){
+        let needs = [];
+        costs.forEach(
+            item=>{
+                let need = item.count - getItemCount(item.itemHrid);
+                //if(need<0)need=0;
+                needs.push({itemHrid:item.itemHrid,count:need});
+            }
+        )
+        return needs;
+    }
+    async function handleHousePanelAdd(panel) {
+        let buildButton = panel.querySelector("div.Button_button__1Fe9z");
+        if (buildButton) {
+            let addButton = document.createElement("button");
+            addButton.onclick = ()=>{
+                let roomName = panel.querySelector("div.HousePanel_header__2oNIL").innerText;
+                let toLevel = panel.querySelector("div.HousePanel_level__1wpys").innerText.split(" ").slice(-1)[0];
+                console.log("room:"+roomName+toLevel);
+
+                let [_,roomInfo] = Object.entries(initData_houseRoomDetailMap).find(([k,v])=>v.name === roomName);
+                let costs = roomInfo.upgradeCostsMap[toLevel];
+                costs = costs.slice(1);//coin remove
+                let actions = costs2actions(costs);
+                actions.forEach(action=>enqueue(JSON.stringify(action)));
+            }
+            addButton.innerText = "加入队列";
+            buildButton.parentNode.appendChild(addButton);
+        }
+    }
+    async function handleHousePanelRemove(panel) {
+        
     }
 })();
