@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.4
+// @version      2.3.5
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -226,6 +226,30 @@
         clearQueue.onclick = () => {
             while (dequeue());
         }
+
+        //隐藏button
+        let hideButton = document.createElement("button");
+        hideButton.innerText = "隐藏";
+        hideButton.onclick=()=>{
+            if(hideButton.innerText === "显示"){
+                hideButton.innerText = "隐藏";
+                //显示所有
+                let node = hideButton.nextElementSibling;
+                while(node){
+                    node.style.display="initial";
+                    node = node.nextElementSibling;
+                }
+            }else{
+                hideButton.innerText = "显示";
+                //隐藏所有
+                let node = hideButton.nextElementSibling;
+                while(node){
+                    node.style.display="none";
+                    node = node.nextElementSibling;
+                }
+            }
+        }
+        div.appendChild(hideButton);
         //记录
         let recordsDiv = document.createElement("div");
         recordsDiv.id = "script_recordsDiv";
