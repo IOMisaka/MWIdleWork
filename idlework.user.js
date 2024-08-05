@@ -129,12 +129,19 @@
     function hookSend() {
         var oriSend = WebSocket.prototype.send;
         WebSocket.prototype.send = function (data) {
+            let _this = this;
+            idleSend = function (e) { oriSend.call(_this, e) }
+
             let obj = JSON.parse(data);
+            if(obj.type==="ping"){//过滤ping
+                oriSend.call(this, data);
+                return;
+            }
             if (data && data.indexOf("newCharacterActionData") > 0) {
                 updateAction(data);
             }
             console.log("发送指令:", data);
-            let _this = this;
+            
             if (clientQueueOn) {
                 console.log("client queue add:", data);
                 if (clientQueueDecOn
@@ -151,7 +158,7 @@
                     actions.forEach(action => enqueue(JSON.stringify(action)));
                 } else enqueue(data);
             } else oriSend.call(this, data);
-            idleSend = function (e) { oriSend.call(_this, e) }
+            
 
             if (recording) {
                 records.push(data);
