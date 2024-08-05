@@ -276,15 +276,24 @@
             actButton.innerText = key;
             actButton.title = "左键执行，右键删除";
             actButton.onclick = () => {
+                let index = 0;//delay
+                actButton.disabled = true;
                 for (let i = 0; i < cmds.length; i++) {
                     let obj = JSON.parse(cmds[i]);
                     let data = cmds[i];
-                    if (obj.type === "equip_item") {
-                        setTimeout(() => idleSend(data), i * 500);//避免一次发太多
-                    } else {
+                    actButton.innerText = `执行中(${cmds.length-i})`;
+                    if (obj.type === "new_character_action") {//需要持续的操作放队列
                         enqueue(data);
+                    } else {//立即执行的指令
+                        setTimeout(() => idleSend(data), index * 500);//避免同时发太多
+                        index++;
                     }
                 }
+                //恢复原状
+                setTimeout(() => {
+                    actButton.innerText = key;
+                    actButton.disabled = false;
+                }, index*500);
             }
             actButton.addEventListener("contextmenu", (event) => {
                 event.preventDefault();
