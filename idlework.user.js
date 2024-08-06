@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.7
+// @version      2.3.8
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -133,7 +133,7 @@
             idleSend = function (e) { oriSend.call(_this, e) }
 
             let obj = JSON.parse(data);
-            if(obj.type==="ping"){//过滤ping
+            if (obj.type === "ping") {//过滤ping
                 oriSend.call(this, data);
                 return;
             }
@@ -141,7 +141,7 @@
                 updateAction(data);
             }
             console.log("发送指令:", data);
-            
+
             if (clientQueueOn) {
                 console.log("client queue add:", data);
                 if (clientQueueDecOn
@@ -158,7 +158,7 @@
                     actions.forEach(action => enqueue(JSON.stringify(action)));
                 } else enqueue(data);
             } else oriSend.call(this, data);
-            
+
 
             if (recording) {
                 records.push(data);
@@ -237,21 +237,21 @@
         //隐藏button
         let hideButton = document.createElement("button");
         hideButton.innerText = "隐藏";
-        hideButton.onclick=()=>{
-            if(hideButton.innerText === "显示"){
+        hideButton.onclick = () => {
+            if (hideButton.innerText === "显示") {
                 hideButton.innerText = "隐藏";
                 //显示所有
                 let node = hideButton.nextElementSibling;
-                while(node){
-                    node.style.display="initial";
+                while (node) {
+                    node.style.display = "initial";
                     node = node.nextElementSibling;
                 }
-            }else{
+            } else {
                 hideButton.innerText = "显示";
                 //隐藏所有
                 let node = hideButton.nextElementSibling;
-                while(node){
-                    node.style.display="none";
+                while (node) {
+                    node.style.display = "none";
                     node = node.nextElementSibling;
                 }
             }
@@ -312,7 +312,7 @@
                 for (let i = 0; i < cmds.length; i++) {
                     let obj = JSON.parse(cmds[i]);
                     let data = cmds[i];
-                    actButton.innerText = `执行中(${cmds.length-i})`;
+                    actButton.innerText = `执行中(${cmds.length - i})`;
                     if (obj.type === "new_character_action") {//需要持续的操作放队列
                         enqueue(data);
                     } else {//立即执行的指令
@@ -324,7 +324,7 @@
                 setTimeout(() => {
                     actButton.innerText = key;
                     actButton.disabled = false;
-                }, index*500);
+                }, index * 500);
             }
             actButton.addEventListener("contextmenu", (event) => {
                 event.preventDefault();
@@ -561,6 +561,19 @@
             }
         }
     }
+    //合并同action
+    function addToActionList(list, actionObj, combine = true) {
+        if (combine) {
+            let foundAction = list.find(act => act.newCharacterActionData.actionHrid === actionObj.newCharacterActionData.actionHrid);
+            if (foundAction) {
+                foundAction.newCharacterActionData.maxCount += actionObj.newCharacterActionData.maxCount;
+            } else {
+                list.push(actionObj);
+            }
+        } else {
+            list.push(actionObj);
+        }
+    }
     function deconstructItem(item, actionList, inventoryPool) {
         let count = 0;
         if (inventoryPool.hasOwnProperty(item.itemHrid)) {
@@ -595,22 +608,22 @@
                 //加入待做列表
                 let times = Math.ceil(need / act.outputItems[0].count);
                 if (times > 0) {
-                    let data = createObj(act.hrid, times, upgradeItemHash);
+                    let actionObj = createObj(act.hrid, times, upgradeItemHash);
                     console.log(`加入：${act.hrid}+${times}`);
-                    actionList.push(data);
+                    addToActionList(actionList,actionObj);
                 }
             } else {//最低级材料
                 act = Object.entries(initData_actionDetailMap).find(([k, v]) => v.dropTable?.[0]?.itemHrid === item.itemHrid && v.dropTable?.[0]?.dropRate === 1);//基础采集
                 if (act) {//可以直接做的材料
-                    [nop,act]=act;
+                    [nop, act] = act;
                     let perCount = (act.dropTable[0].minCount + act.dropTable[0].maxCount) / 2;//每次采集期望
                     let times = Math.ceil(need / perCount);
                     if (times > 0) {
-                        let data = createObj(act.hrid, times);
+                        let actionObj = createObj(act.hrid, times);
                         console.log(`加入：${act.hrid}+${times}`);
-                        actionList.push(data);
+                        addToActionList(actionList,actionObj);
                     }
-                }else{//比如兽皮不能直接做
+                } else {//比如兽皮不能直接做
                     alert(`缺少必要材料(${need})：${item.itemHrid}`);
                 }
             }
@@ -630,7 +643,7 @@
         return actions;
     }
     function getItemCount(itemHrid) {
-        return currentCharacterItems.find(item => item.itemHrid === itemHrid && item.itemLocationHrid==="/item_locations/inventory")?.count || 0;//背包里面的
+        return currentCharacterItems.find(item => item.itemHrid === itemHrid && item.itemLocationHrid === "/item_locations/inventory")?.count || 0;//背包里面的
     }
     function getItemHash(itemHrid) {
         return `${currentCharacterItems[0].characterID}::/item_locations/inventory::${itemHrid}::0`;//只取0级物品做升级
