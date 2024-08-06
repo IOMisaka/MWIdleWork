@@ -633,7 +633,7 @@
         return currentCharacterItems.find(item => item.itemHrid === itemHrid)?.count || 0;
     }
     function getItemHash(itemHrid) {
-        return `${currentCharacterItems[0].characterId}::/item_locations/inventory::${itemHrid}::0`;
+        return `${currentCharacterItems[0].characterID}::/item_locations/inventory::${itemHrid}::0`;
         //return currentCharacterItems.find(item => item.itemHrid === itemHrid)?.hash || "";
     }
     function costs2needs(costs) {
