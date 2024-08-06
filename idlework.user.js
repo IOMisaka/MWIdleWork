@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.6
+// @version      2.3.7
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -630,10 +630,10 @@
         return actions;
     }
     function getItemCount(itemHrid) {
-        return currentCharacterItems.find(item => item.itemHrid === itemHrid)?.count || 0;
+        return currentCharacterItems.find(item => item.itemHrid === itemHrid && item.itemLocationHrid==="/item_locations/inventory")?.count || 0;//背包里面的
     }
     function getItemHash(itemHrid) {
-        return `${currentCharacterItems[0].characterID}::/item_locations/inventory::${itemHrid}::0`;
+        return `${currentCharacterItems[0].characterID}::/item_locations/inventory::${itemHrid}::0`;//只取0级物品做升级
         //return currentCharacterItems.find(item => item.itemHrid === itemHrid)?.hash || "";
     }
     function costs2needs(costs) {
