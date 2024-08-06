@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.5
+// @version      2.3.6
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -633,7 +633,8 @@
         return currentCharacterItems.find(item => item.itemHrid === itemHrid)?.count || 0;
     }
     function getItemHash(itemHrid) {
-        return currentCharacterItems.find(item => item.itemHrid === itemHrid)?.hash || "";
+        return `${currentCharacterItems[0].characterId}::/item_locations/inventory::${itemHrid}::0`;
+        //return currentCharacterItems.find(item => item.itemHrid === itemHrid)?.hash || "";
     }
     function costs2needs(costs) {
         let needs = [];
