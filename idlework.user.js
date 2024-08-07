@@ -643,7 +643,7 @@
         return actions;
     }
     function getItemCount(itemHrid) {
-        return currentCharacterItems.find(item => item.itemHrid === itemHrid && item.itemLocationHrid === "/item_locations/inventory")?.count || 0;//背包里面的
+        return currentCharacterItems.find(item => item.itemHrid === itemHrid && item.itemLocationHrid === "/item_locations/inventory" &&item.enhancementLevel===0)?.count || 0;//背包里面的0级物品
     }
     function getItemHash(itemHrid) {
         return `${currentCharacterItems[0].characterID}::/item_locations/inventory::${itemHrid}::0`;//只取0级物品做升级
