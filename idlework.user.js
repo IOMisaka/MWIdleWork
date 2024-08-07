@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.10
+// @version      2.3.11
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -562,7 +562,7 @@
         }
     }
     //合并同action
-    function addToActionList(list, actionObj, combine = true) {
+    function addToActionList(list, actionObj, combine = false) {//取消合并，不按顺序制作会存在问题
         if (combine) {
             let foundAction = list.find(act => act.newCharacterActionData.actionHrid === actionObj.newCharacterActionData.actionHrid);
             if (foundAction) {
@@ -683,3 +683,4 @@
 
     }
 })();
+ 
