@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.13
+// @version      2.3.14
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -403,9 +403,10 @@
     function handleMessage(message) {
         let obj = JSON.parse(message);
         if (obj && obj.type === "init_character_data") {
+            cleanAll();
             currentActionsHridList = [...obj.characterActions];
             currentCharacterItems = obj.characterItems;
-            init(obj.character.id);
+            initAll(obj.character.id);
         } else if (obj && obj.type === "init_client_data") {
             initData_itemDetailMap = obj.itemDetailMap;
             initData_actionDetailMap = obj.actionDetailMap;
@@ -456,9 +457,7 @@
         localStorage.setItem("script_idlework"+settings.id, JSON.stringify(settings));
     }
 
-    function init(characterId){
-        cleanAll();
-
+    function initAll(characterId){
         let o = localStorage.getItem("script_idlework"+characterId);
         if (o) {
             settings = JSON.parse(o);
