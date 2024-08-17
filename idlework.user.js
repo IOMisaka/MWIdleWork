@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.11
+// @version      2.3.13
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -27,6 +27,7 @@
     };
 
     let settings = {
+        id:null,
         idleActionStr: null,
         idleOn: false,
         buffNotify: false,
@@ -42,11 +43,17 @@
     let clientQueueOn = false;
     let clientQueue = [];
     let clientQueueDecOn = false;//自动解析
+    let currentActionsHridList = [];
+    let currentCharacterItems = [];
 
+    //静态数据
     let initData_itemDetailMap = null;
     let initData_actionDetailMap = null;
+    let initData_houseRoomDetailMap = null;
 
-    loadSettings();
+    
+    
+
     hookWS();
     hookSend();
 
@@ -392,15 +399,13 @@
             return handleMessage(message);
         }
     }
-    let currentActionsHridList = [];
-    let currentCharacterItems = [];
-    let initData_houseRoomDetailMap = null;
+    
     function handleMessage(message) {
         let obj = JSON.parse(message);
         if (obj && obj.type === "init_character_data") {
             currentActionsHridList = [...obj.characterActions];
             currentCharacterItems = obj.characterItems;
-            waitForActionPanelParent();
+            init(obj.character.id);
         } else if (obj && obj.type === "init_client_data") {
             initData_itemDetailMap = obj.itemDetailMap;
             initData_actionDetailMap = obj.actionDetailMap;
@@ -448,21 +453,42 @@
         clientQueue.forEach(e => queue.push(e.data));
         settings.queue = queue;
 
-        localStorage.setItem("script_idlework", JSON.stringify(settings));
+        localStorage.setItem("script_idlework"+settings.id, JSON.stringify(settings));
     }
-    function loadSettings() {
-        let o = localStorage.getItem("script_idlework");
+
+    function init(characterId){
+        cleanAll();
+
+        let o = localStorage.getItem("script_idlework"+characterId);
         if (o) {
             settings = JSON.parse(o);
         }
+        settings.id = characterId;
         settings.recordsDict = settings.recordsDict || {};
         settings.queue = settings.queue || [];
 
         updateAction(settings.idleActionStr);
         settings.queue.forEach(e => enqueue(e));
+        waitForActionPanelParent();
     }
+    function cleanAll(){
+        let idlediv = document.querySelector("#script_idlediv");
+        if(idlediv){
+            idlediv.parentElement.removeChild(idlediv);
+        }
 
+        recording = false;
+        records = [];
 
+        idleSend = null;
+        lastActionStr = null;
+
+        clientQueueOn = false;
+        clientQueue = [];
+        clientQueueDecOn = false;//自动解析
+        currentActionsHridList = [];
+        currentCharacterItems = [];
+    }
     /* 动作面板 */
     const waitForActionPanelParent = () => {
         const targetNode = document.querySelector("div.GamePage_contentPanel__Zx4FH");
