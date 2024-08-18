@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.14
+// @version      2.3.15
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -154,14 +154,13 @@
                 if (clientQueueDecOn
                     && obj && obj.type === "new_character_action"
                     && obj.newCharacterActionData
-                    && obj.newCharacterActionData.hasMaxCount
                     && obj.newCharacterActionData.actionHrid
-                    && obj.newCharacterActionData.maxCount > 0
                     && initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.inputItems
                 ) {
                     let outputItem = initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.outputItems[0];
                     let currentCount = getItemCount(outputItem.itemHrid);
-                    let actions = costs2actions([{ itemHrid: outputItem.itemHrid, count: outputItem.count * obj.newCharacterActionData.maxCount + currentCount }]);
+                    let times = obj.newCharacterActionData.hasMaxCount ? obj.newCharacterActionData.maxCount:1;//默认一个
+                    let actions = costs2actions([{ itemHrid: outputItem.itemHrid, count: outputItem.count * times + currentCount }]);
                     actions.forEach(action => enqueue(JSON.stringify(action)));
                 } else enqueue(data);
             } else oriSend.call(this, data);
