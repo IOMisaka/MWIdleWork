@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.16
+// @version      2.3.17
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -689,8 +689,8 @@
         if (buildButton) {
             let addButton = document.createElement("button");
             addButton.onclick = () => {
-                let roomName = panel.querySelector("div.HousePanel_header__2oNIL").innerText;
-                let toLevel = panel.querySelector("div.HousePanel_level__1wpys").innerText.split(" ").slice(-1)[0];
+                let roomName = panel.querySelector("div.HousePanel_header__3QdpP").innerText;
+                let toLevel = panel.querySelector("div.HousePanel_level__2UlEu").innerText.split(" ").slice(-1)[0];
                 console.log("room:" + roomName + toLevel);
 
                 let [_, roomInfo] = Object.entries(initData_houseRoomDetailMap).find(([k, v]) => v.name === roomName);
