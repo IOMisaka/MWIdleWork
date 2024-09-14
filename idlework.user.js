@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.15
+// @version      2.3.16
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -503,9 +503,9 @@
 
                         if (
                             added?.classList?.contains("Modal_modalContainer__3B80m") &&
-                            added.querySelector("div.HousePanel_modalContent__2Zv1N")
+                            added.querySelector("div.HousePanel_modalContent__3AwPH")
                         ) {
-                            handleHousePanelAdd(added.querySelector("div.HousePanel_modalContent__2Zv1N"));
+                            handleHousePanelAdd(added.querySelector("div.HousePanel_modalContent__3AwPH"));
                         }
                         if (
                             added?.classList?.contains("Modal_modalContainer__3B80m")
@@ -523,9 +523,9 @@
 
                         if (
                             rm?.classList?.contains("Modal_modalContainer__3B80m") &&
-                            rm.querySelector("div.HousePanel_modalContent__2Zv1N")
+                            rm.querySelector("div.HousePanel_modalContent__3AwPH")
                         ) {
-                            handleHousePanelRemove(rm.querySelector("div.HousePanel_modalContent__2Zv1N"));
+                            handleHousePanelRemove(rm.querySelector("div.HousePanel_modalContent__3AwPH"));
                         }
                     }
                 }
@@ -685,7 +685,7 @@
         return needs;
     }
     async function handleHousePanelAdd(panel) {
-        let buildButton = panel.querySelector("div.Button_button__1Fe9z");
+        let buildButton = panel.querySelector("button.Button_button__1Fe9z");
         if (buildButton) {
             let addButton = document.createElement("button");
             addButton.onclick = () => {
