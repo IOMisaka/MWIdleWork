@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.21
+// @version      2.3.22
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -59,8 +59,41 @@
         initData_itemDetailMap = obj.itemDetailMap;
         initData_houseRoomDetailMap = obj.houseRoomDetailMap;
     }
+    //反查房子
+    let houseRoomNames={
+        '/house_rooms/dairy_barn': '奶牛棚',
+        '/house_rooms/garden': '花园',
+        '/house_rooms/log_shed': '木棚',
+        '/house_rooms/forge': '锻造台',
+        '/house_rooms/workshop': '工作间',
+        '/house_rooms/sewing_parlor': '缝纫室',
+        '/house_rooms/kitchen': '厨房',
+        '/house_rooms/brewery': '冲泡坊',
+        '/house_rooms/laboratory': '实验室',
+        '/house_rooms/observatory': '天文台',
+        '/house_rooms/dining_room': '餐厅',
+        '/house_rooms/library': '图书馆',
+        '/house_rooms/dojo': '道场',
+        '/house_rooms/gym': '健身房',
+        '/house_rooms/armory': '军械库',
+        '/house_rooms/archery_range': '射箭场',
+        '/house_rooms/mystical_study': '神秘研究室'
+      };
 
-
+    let houseRoomDict = {};
+    if(initData_houseRoomDetailMap){
+        
+        for (const key in houseRoomNames) {
+            if (houseRoomNames.hasOwnProperty(key)) {
+                houseRoomDict[houseRoomNames[key]] = key;
+            }
+        }
+        for(const key in houseRoomNames){
+            let enNames = initData_houseRoomDetailMap[key]["name"];
+            houseRoomDict[enNames]=key
+        }
+    }
+    //反查房子
     hookWS();
     hookSend();
 
@@ -700,9 +733,10 @@
             addButton.onclick = () => {
                 let roomName = panel.querySelector("div.HousePanel_header__3QdpP").innerText;
                 let toLevel = panel.querySelector("div.HousePanel_level__2UlEu").innerText.split(" ").map(s=>parseInt(s)).filter(s=>s)[1];
+                roomName = houseRoomDict[roomName];
                 console.log("room:" + roomName + toLevel);
 
-                let [_, roomInfo] = Object.entries(initData_houseRoomDetailMap).find(([k, v]) => v.name === roomName);
+                let roomInfo = initData_houseRoomDetailMap[roomName]
                 let costs = roomInfo.upgradeCostsMap[toLevel];
                 costs = costs.slice(1);//coin remove
                 let actions = costs2actions(costs);
