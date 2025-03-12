@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.22
+// @version      2.3.23
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -200,7 +200,7 @@
                     let outputItem = initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.outputItems[0];
                     let currentCount = getItemCount(outputItem.itemHrid);
                     let times = obj.newCharacterActionData.hasMaxCount ? obj.newCharacterActionData.maxCount:1;//默认一个
-                    let actions = costs2actions([{ itemHrid: outputItem.itemHrid, count: outputItem.count * times + currentCount }]);
+                    let actions = costs2actions([{ itemHrid: outputItem.itemHrid, count: outputItem.count * times + currentCount }],obj.newCharacterActionData.characterLoadoutId);
                     actions.forEach(action => enqueue(JSON.stringify(action)));
                 } else enqueue(data);
             } else oriSend.call(this, data);
@@ -612,20 +612,22 @@
         clientQueueOn = false;
         clientQueueDecOn = false;
     }
-    function createObj(actionHrid, count, hash = "") {
-        return {
+    function createObj(actionHrid, count, hash1 = "",hash2="") {
+        let obj= {
             "type": "new_character_action",
             "newCharacterActionData": {
                 "actionHrid": actionHrid,
                 "hasMaxCount": true,
                 "maxCount": count,
-                "upgradeItemHash": hash,
+                "primaryItemHash": hash1,
+                "secondaryItemHash":hash2,
                 "enhancingMaxLevel": 0,
-                "enhancingProtectionItemHash": "",
-                "enhancingProtectionItemMinLevel": 0,
+                "enhancingProtectionMinLevel": 0,
                 "shouldClearQueue": false
             }
         }
+
+        return obj
     }
     //合并同action
     function addToActionList(list, actionObj, combine = false) {//取消合并，不按顺序制作会存在问题
@@ -704,8 +706,10 @@
         return actionList;
     }
     // [{itemHrid:"/items/lumber",count:1}]
-    function costs2actions(costs) {
+    function costs2actions(costs,characterLoadoutId=null) {
         let actions = deconstructItems(costs);
+        if(characterLoadoutId)//添加装备
+            actions.forEach(act=>act.newCharacterActionData.characterLoadoutId=characterLoadoutId)
         return actions;
     }
     function getItemCount(itemHrid) {
