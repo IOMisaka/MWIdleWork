@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.17
+// @version      2.3.21
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -51,8 +51,15 @@
     let initData_actionDetailMap = null;
     let initData_houseRoomDetailMap = null;
 
-    
-    
+    if (localStorage.getItem("initClientData")) {
+        console.log("update init_client_data from LocalStorage");
+        const obj = JSON.parse(localStorage.getItem("initClientData"));
+        console.log(obj);
+        initData_actionDetailMap = obj.actionDetailMap;
+        initData_itemDetailMap = obj.itemDetailMap;
+        initData_houseRoomDetailMap = obj.houseRoomDetailMap;
+    }
+
 
     hookWS();
     hookSend();
@@ -398,9 +405,10 @@
             return handleMessage(message);
         }
     }
-    
+
     function handleMessage(message) {
         let obj = JSON.parse(message);
+        if(obj)console.log(obj)
         if (obj && obj.type === "init_character_data") {
             cleanAll();
             currentActionsHridList = [...obj.characterActions];
@@ -496,9 +504,9 @@
                     for (const added of mutation.addedNodes) {
                         if (
                             added?.classList?.contains("Modal_modalContainer__3B80m") &&
-                            added.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY")
+                            added.querySelector("div.SkillActionDetail_regularComponent__3oCgr")
                         ) {
-                            handleActionPanelAdd(added.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY"));
+                            handleActionPanelAdd(added.querySelector("div.SkillActionDetail_regularComponent__3oCgr"));
                         }
 
                         if (
@@ -516,9 +524,9 @@
                     for (const rm of mutation.removedNodes) {
                         if (
                             rm?.classList?.contains("Modal_modalContainer__3B80m") &&
-                            rm.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY")
+                            rm.querySelector("div.SkillActionDetail_regularComponent__3oCgr")
                         ) {
-                            handleActionPanelRemove(rm.querySelector("div.SkillActionDetail_nonenhancingComponent__1Y-ZY"));
+                            handleActionPanelRemove(rm.querySelector("div.SkillActionDetail_regularComponent__3oCgr"));
                         }
 
                         if (
@@ -538,6 +546,7 @@
 
     async function handleActionPanelAdd(panel) {
         let buttons = panel.querySelector("div.SkillActionDetail_buttonsContainer__sbg-V");
+        console.log("find buttons:",buttons)
         if (buttons) {
             let html = '<div><input type="checkbox" id="script_clientQueue"><label for="script_clientQueue">加入闲时队列  </label><input type="checkbox" id="script_clientQueueDec"><label id="script_clientQueueDecLabel" for="script_clientQueueDec">解析需求</label></div>';
             buttons.insertAdjacentHTML("afterend", html);
@@ -690,7 +699,7 @@
             let addButton = document.createElement("button");
             addButton.onclick = () => {
                 let roomName = panel.querySelector("div.HousePanel_header__3QdpP").innerText;
-                let toLevel = panel.querySelector("div.HousePanel_level__2UlEu").innerText.split(" ").slice(-1)[0];
+                let toLevel = panel.querySelector("div.HousePanel_level__2UlEu").innerText.split(" ").map(s=>parseInt(s)).filter(s=>s)[1];
                 console.log("room:" + roomName + toLevel);
 
                 let [_, roomInfo] = Object.entries(initData_houseRoomDetailMap).find(([k, v]) => v.name === roomName);
@@ -707,4 +716,3 @@
 
     }
 })();
- 
