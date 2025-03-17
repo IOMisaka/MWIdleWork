@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.25
+// @version      2.3.26
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -55,9 +55,7 @@
     let initData_houseRoomDetailMap = null;
 
     if (localStorage.getItem("initClientData")) {
-        console.log("update init_client_data from LocalStorage");
         const obj = JSON.parse(localStorage.getItem("initClientData"));
-        console.log(obj);
         initData_actionDetailMap = obj.actionDetailMap;
         initData_itemDetailMap = obj.itemDetailMap;
         initData_houseRoomDetailMap = obj.houseRoomDetailMap;
@@ -185,7 +183,7 @@
                 return;
             }
             socket = this;
-            idleSend = function (e) {console.log(e); oriSend.call(socket, e) }
+            idleSend = function (e) {oriSend.call(socket, e) }
 
             let obj = JSON.parse(data);
             if (obj.type === "ping") {//过滤ping
@@ -195,10 +193,8 @@
             if (data && data.indexOf("newCharacterActionData") > 0) {
                 updateAction(data);
             }
-            console.log(data);
 
             if (clientQueueOn) {
-                console.log("client queue add:", data);
                 if (clientQueueDecOn
                     && obj && obj.type === "new_character_action"
                     && obj.newCharacterActionData
@@ -271,8 +267,6 @@
         buttonSave.onclick = () => {
 
             settings.idleActionStr = lastActionStr;
-            console.log("保存", lastActionStr);
-
             const { desc, icon, count } = getDescIconCountFromStr(lastActionStr);
             txtSaved.title = desc;
             txtSaved.innerText = icon + count;
@@ -408,7 +402,6 @@
     }
     let sendLimit = false;
     function doIdle() {
-        console.log("做空闲任务");
         if (clientQueue.length > 0) {//队列
             idleSend(dequeue());
         } else if (settings.idleOn && settings.idleActionStr && idleSend) {//空闲任务
@@ -471,11 +464,9 @@
             }
             //空闲任务检测
             if(idleTimer){
-                console.log("取消空闲任务");
                 clearTimeout(idleTimer);
             }
             if (currentActionsHridList.length == 0) {
-                console.log("准备空闲任务");
                 idleTimer = setTimeout(doIdle, 1111); // 延迟一秒执行空闲任务
             }
         } else if (obj && obj.type === "community_buffs_updated" && settings.buffNotify) {
@@ -560,7 +551,7 @@
                         if (
                             added?.classList?.contains("Modal_modalContainer__3B80m")
                         ) {
-                            console.log(added);
+                            //console.log(added);
                         }
                     }
                     for (const rm of mutation.removedNodes) {
@@ -588,7 +579,6 @@
 
     async function handleActionPanelAdd(panel) {
         let buttons = panel.querySelector("div.SkillActionDetail_buttonsContainer__sbg-V");
-        console.log("find buttons:",buttons)
         if (buttons) {
             let html = '<div><input type="checkbox" id="script_clientQueue"><label for="script_clientQueue">加入闲时队列  </label><input type="checkbox" id="script_clientQueueDec"><label id="script_clientQueueDecLabel" for="script_clientQueueDec">解析需求</label></div>';
             buttons.insertAdjacentHTML("afterend", html);
@@ -686,7 +676,6 @@
                 let times = Math.ceil(need / act.outputItems[0].count);
                 if (times > 0) {
                     let actionObj = createObj(act.hrid, times, upgradeItemHash);
-                    console.log(`加入：${act.hrid}+${times}`);
                     addToActionList(actionList,actionObj);
                 }
             } else {//最低级材料
@@ -697,7 +686,6 @@
                     let times = Math.ceil(need / perCount);
                     if (times > 0) {
                         let actionObj = createObj(act.hrid, times);
-                        console.log(`加入：${act.hrid}+${times}`);
                         addToActionList(actionList,actionObj);
                     }
                 } else {//比如兽皮不能直接做
@@ -747,7 +735,6 @@
                 let roomName = panel.querySelector("div.HousePanel_header__3QdpP").innerText;
                 let toLevel = panel.querySelector("div.HousePanel_level__2UlEu").innerText.split(" ").map(s=>parseInt(s)).filter(s=>s)[1];
                 roomName = houseRoomDict[roomName];
-                console.log("room:" + roomName + toLevel);
 
                 let roomInfo = initData_houseRoomDetailMap[roomName]
                 let costs = roomInfo.upgradeCostsMap[toLevel];
