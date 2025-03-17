@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.24
+// @version      2.3.25
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -85,7 +85,7 @@
 
     let houseRoomDict = {};
     if(initData_houseRoomDetailMap){
-        
+
         for (const key in houseRoomNames) {
             if (houseRoomNames.hasOwnProperty(key)) {
                 houseRoomDict[houseRoomNames[key]] = key;
@@ -178,9 +178,14 @@
     }
     function hookSend() {
         var oriSend = WebSocket.prototype.send;
+        var socket = null;
         WebSocket.prototype.send = function (data) {
-            let _this = this;
-            idleSend = function (e) { oriSend.call(_this, e) }
+            if (this.url.indexOf("api.milkywayidle.com/ws") <= -1 && this.url.indexOf("api-test.milkywayidle.com/ws") <= -1) {
+                oriSend.call(this,data);
+                return;
+            }
+            socket = this;
+            idleSend = function (e) {console.log(e); oriSend.call(socket, e) }
 
             let obj = JSON.parse(data);
             if (obj.type === "ping") {//过滤ping
@@ -190,7 +195,7 @@
             if (data && data.indexOf("newCharacterActionData") > 0) {
                 updateAction(data);
             }
-            console.log("发送指令:", data);
+            console.log(data);
 
             if (clientQueueOn) {
                 console.log("client queue add:", data);
@@ -440,7 +445,6 @@
     let idleTimer = null;
     function handleMessage(message) {
         let obj = JSON.parse(message);
-        if(obj)console.log(obj)
         if (obj && obj.type === "init_character_data") {
             cleanAll();
             currentActionsHridList = [...obj.characterActions];
@@ -472,7 +476,7 @@
             }
             if (currentActionsHridList.length == 0) {
                 console.log("准备空闲任务");
-                idleTimer = setTimeout(doIdle, 1000); // 延迟一秒执行空闲任务
+                idleTimer = setTimeout(doIdle, 1111); // 延迟一秒执行空闲任务
             }
         } else if (obj && obj.type === "community_buffs_updated" && settings.buffNotify) {
             if (typeof GM_notification === "undefined" || !GM_notification) {
