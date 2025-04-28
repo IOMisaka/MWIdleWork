@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.27
+// @version      2.3.29
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -24,13 +24,13 @@
         "brewing": "🍵",
         "enhancing": "🛠️",
         "combat": "⚔️",
-        "decompose":"⚛️",
-        "coinify":"🪙",
-        "transmute":"♻️",
+        "decompose": "⚛️",
+        "coinify": "🪙",
+        "transmute": "♻️",
     };
 
     let settings = {
-        id:null,
+        id: null,
         idleActionStr: null,
         idleOn: false,
         buffNotify: false,
@@ -61,7 +61,7 @@
         initData_houseRoomDetailMap = obj.houseRoomDetailMap;
     }
     //反查房子
-    let houseRoomNames={
+    let houseRoomNames = {
         '/house_rooms/dairy_barn': '奶牛棚',
         '/house_rooms/garden': '花园',
         '/house_rooms/log_shed': '木棚',
@@ -79,19 +79,19 @@
         '/house_rooms/armory': '军械库',
         '/house_rooms/archery_range': '射箭场',
         '/house_rooms/mystical_study': '神秘研究室'
-      };
+    };
 
     let houseRoomDict = {};
-    if(initData_houseRoomDetailMap){
+    if (initData_houseRoomDetailMap) {
 
         for (const key in houseRoomNames) {
             if (houseRoomNames.hasOwnProperty(key)) {
                 houseRoomDict[houseRoomNames[key]] = key;
             }
         }
-        for(const key in houseRoomNames){
+        for (const key in houseRoomNames) {
             let enNames = initData_houseRoomDetailMap[key]["name"];
-            houseRoomDict[enNames]=key
+            houseRoomDict[enNames] = key
         }
     }
     //反查房子
@@ -179,11 +179,11 @@
         var socket = null;
         WebSocket.prototype.send = function (data) {
             if (this.url.indexOf("api.milkywayidle.com/ws") <= -1 && this.url.indexOf("api-test.milkywayidle.com/ws") <= -1) {
-                oriSend.call(this,data);
+                oriSend.call(this, data);
                 return;
             }
             socket = this;
-            idleSend = function (e) {oriSend.call(socket, e) }
+            idleSend = function (e) { oriSend.call(socket, e) }
 
             let obj = JSON.parse(data);
             if (obj.type === "ping") {//过滤ping
@@ -203,8 +203,8 @@
                 ) {
                     let outputItem = initData_actionDetailMap?.[obj.newCharacterActionData.actionHrid]?.outputItems[0];
                     let currentCount = getItemCount(outputItem.itemHrid);
-                    let times = obj.newCharacterActionData.hasMaxCount ? obj.newCharacterActionData.maxCount:1;//默认一个
-                    let actions = costs2actions([{ itemHrid: outputItem.itemHrid, count: outputItem.count * times + currentCount }],obj.newCharacterActionData.characterLoadoutId);
+                    let times = obj.newCharacterActionData.hasMaxCount ? obj.newCharacterActionData.maxCount : 1;//默认一个
+                    let actions = costs2actions([{ itemHrid: outputItem.itemHrid, count: outputItem.count * times + currentCount }], obj.newCharacterActionData.characterLoadoutId);
                     actions.forEach(action => enqueue(JSON.stringify(action)));
                 } else enqueue(data);
             } else oriSend.call(this, data);
@@ -407,7 +407,7 @@
         } else if (settings.idleOn && settings.idleActionStr && idleSend) {//空闲任务
             //关闭立即执行，防止无限循环
             let iao = JSON.parse(settings.idleActionStr);
-            if(iao && iao.newCharacterActionData && iao.newCharacterActionData.shouldClearQueue==true)
+            if (iao && iao.newCharacterActionData && iao.newCharacterActionData.shouldClearQueue == true)
                 iao.newCharacterActionData.shouldClearQueue = false;
             idleSend(JSON.stringify(iao));
         }
@@ -463,7 +463,7 @@
                 }
             }
             //空闲任务检测
-            if(idleTimer){
+            if (idleTimer) {
                 clearTimeout(idleTimer);
             }
             if (currentActionsHridList.length == 0) {
@@ -494,11 +494,11 @@
         clientQueue.forEach(e => queue.push(e.data));
         settings.queue = queue;
 
-        localStorage.setItem("script_idlework"+settings.id, JSON.stringify(settings));
+        localStorage.setItem("script_idlework" + settings.id, JSON.stringify(settings));
     }
 
-    function initAll(characterId){
-        let o = localStorage.getItem("script_idlework"+characterId);
+    function initAll(characterId) {
+        let o = localStorage.getItem("script_idlework" + characterId);
         if (o) {
             settings = JSON.parse(o);
         }
@@ -510,9 +510,9 @@
         settings.queue.forEach(e => enqueue(e));
         waitForActionPanelParent();
     }
-    function cleanAll(){
+    function cleanAll() {
         let idlediv = document.querySelector("#script_idlediv");
-        if(idlediv){
+        if (idlediv) {
             idlediv.parentElement.removeChild(idlediv);
         }
 
@@ -611,15 +611,15 @@
         clientQueueOn = false;
         clientQueueDecOn = false;
     }
-    function createObj(actionHrid, count, hash1 = "",hash2="") {
-        let obj= {
+    function createObj(actionHrid, count, hash1 = "", hash2 = "") {
+        let obj = {
             "type": "new_character_action",
             "newCharacterActionData": {
                 "actionHrid": actionHrid,
                 "hasMaxCount": true,
                 "maxCount": count,
                 "primaryItemHash": hash1,
-                "secondaryItemHash":hash2,
+                "secondaryItemHash": hash2,
                 "enhancingMaxLevel": 0,
                 "enhancingProtectionMinLevel": 0,
                 "shouldClearQueue": false
@@ -676,7 +676,7 @@
                 let times = Math.ceil(need / act.outputItems[0].count);
                 if (times > 0) {
                     let actionObj = createObj(act.hrid, times, upgradeItemHash);
-                    addToActionList(actionList,actionObj);
+                    addToActionList(actionList, actionObj);
                 }
             } else {//最低级材料
                 act = Object.entries(initData_actionDetailMap).find(([k, v]) => v.dropTable?.[0]?.itemHrid === item.itemHrid && v.dropTable?.[0]?.dropRate === 1);//基础采集
@@ -686,7 +686,7 @@
                     let times = Math.ceil(need / perCount);
                     if (times > 0) {
                         let actionObj = createObj(act.hrid, times);
-                        addToActionList(actionList,actionObj);
+                        addToActionList(actionList, actionObj);
                     }
                 } else {//比如兽皮不能直接做
                     alert(`缺少必要材料(${need})：${item.itemHrid}`);
@@ -703,14 +703,14 @@
         return actionList;
     }
     // [{itemHrid:"/items/lumber",count:1}]
-    function costs2actions(costs,characterLoadoutId=null) {
+    function costs2actions(costs, characterLoadoutId = null) {
         let actions = deconstructItems(costs);
-        if(characterLoadoutId)//添加装备
-            actions.forEach(act=>act.newCharacterActionData.characterLoadoutId=characterLoadoutId)
+        if (characterLoadoutId)//添加装备
+            actions.forEach(act => act.newCharacterActionData.characterLoadoutId = characterLoadoutId)
         return actions;
     }
     function getItemCount(itemHrid) {
-        return currentCharacterItems.find(item => item.itemHrid === itemHrid && item.itemLocationHrid === "/item_locations/inventory" &&item.enhancementLevel===0)?.count || 0;//背包里面的0级物品
+        return currentCharacterItems.find(item => item.itemHrid === itemHrid && item.itemLocationHrid === "/item_locations/inventory" && item.enhancementLevel === 0)?.count || 0;//背包里面的0级物品
     }
     function getItemHash(itemHrid) {
         return `${currentCharacterItems[0].characterID}::/item_locations/inventory::${itemHrid}::0`;//只取0级物品做升级
@@ -733,7 +733,7 @@
             let addButton = document.createElement("button");
             addButton.onclick = () => {
                 let roomName = panel.querySelector("div.HousePanel_header__3QdpP").innerText;
-                let toLevel = panel.querySelector("div.HousePanel_level__2UlEu").innerText.split(" ").map(s=>parseInt(s)).findLast(s=>s)
+                let toLevel = panel.querySelector("div.HousePanel_level__2UlEu").innerText.split(" ").map(s => parseInt(s)).findLast(s => s)
                 roomName = houseRoomDict[roomName];
 
                 let roomInfo = initData_houseRoomDetailMap[roomName]
@@ -749,4 +749,84 @@
     async function handleHousePanelRemove(panel) {
 
     }
+
+    //定时逃跑功能
+    function escapeFromBattle() {
+        //点击逃跑按钮
+        //两个逃跑按钮都可以
+        console.log("逃跑中...")
+        let escapeButton = document.querySelector(".BattlePanel_buttonsContainer__lNrk1 .Button_button__1Fe9z.Button_warning__1-AMI.Button_fullWidth__17pVU") || document.querySelector(".Header_stopButtonContainer__3hHUk .Button_button__1Fe9z.Button_warning__1-AMI.Button_fullWidth__17pVU.Button_small__3fqC7");
+        escapeButton?.click();
+        setTimeout(() => {
+            //确定逃跑
+            console.log("你溜了")
+            document.querySelector(".DialogModal_buttonContainer__2lIyK .Button_button__1Fe9z.Button_success__6d6kU.Button_fullWidth__17pVU")?.click();
+        }, 1000);
+    }
+    let escapeTimer = null;
+    let escapeRemainSeconds = 0;
+    function startEscapeFromBattle() {
+        //显示倒计时
+        if (escapeTimer) {//已经在跑了
+            clearInterval(escapeTimer);
+            escapeTimer = null;
+            let autoEscapeButton = document.querySelector("#autoEscapeButton");
+            if (!autoEscapeButton) return;//没有按钮，不处理
+            if (autoEscapeButton) {
+                autoEscapeButton.innerText = "秒后自动逃跑";
+            }
+        } else {//
+            escapeTimer = setInterval(() => {
+                console.log(`逃跑倒计时${escapeRemainSeconds}`);
+
+                if (escapeRemainSeconds > 0) {
+                    escapeRemainSeconds--;
+
+                    let autoEscapeButton = document.querySelector("#autoEscapeButton");
+                    if (autoEscapeButton) autoEscapeButton.innerText = `取消(${escapeRemainSeconds}秒)`;
+                } else {
+                    escapeFromBattle();
+                    clearInterval(escapeTimer);
+                    escapeTimer = null;
+                }
+            }, 1000);
+        }
+
+
+    }
+
+    setInterval(() => {
+        let autoEscapeButton = document.querySelector("#autoEscapeButton");
+        if (autoEscapeButton) return;//有了
+
+        let escapeButton = document.querySelector(".BattlePanel_buttonsContainer__lNrk1 .Button_button__1Fe9z.Button_warning__1-AMI.Button_fullWidth__17pVU");
+        if (escapeButton) {
+            let autoEscapeDiv = document.createElement("div");
+            //有一个按钮和一个输入秒数的输入框
+
+            //<button id="autoEscapeButton" class="Button_button__1Fe9z Button_warning__1-AMI">自动逃跑</button>
+            //<input type="number" id="autoEscapeTime" value="10">秒后逃跑
+
+            let autoEscapeTime = document.createElement("input");
+            autoEscapeTime.id = "autoEscapeTime";
+            autoEscapeTime.type = "number";
+            autoEscapeTime.value = "120";
+            autoEscapeTime.style.width = "100px";
+            autoEscapeTime.className = "Input_input__2-t98";
+            autoEscapeDiv.appendChild(autoEscapeTime);
+
+            autoEscapeButton = document.createElement("button");
+            autoEscapeButton.id = "autoEscapeButton";
+            autoEscapeButton.innerText = "秒后自动逃跑";
+            autoEscapeButton.className = "Button_button__1Fe9z Button_warning__1-AMI";
+            autoEscapeButton.onclick = () => {
+                escapeRemainSeconds = parseInt(autoEscapeTime.value);
+                startEscapeFromBattle();
+            };
+            autoEscapeDiv.appendChild(autoEscapeButton);
+
+            document.querySelector(".BattlePanel_buttonsContainer__lNrk1 .Button_button__1Fe9z.Button_warning__1-AMI").parentNode.parentNode.appendChild(autoEscapeDiv);
+        }
+
+    }, 1000);
 })();
