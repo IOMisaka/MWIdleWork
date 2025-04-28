@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.29
+// @version      2.3.30
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -759,7 +759,7 @@
         escapeButton?.click();
         setTimeout(() => {
             //确定逃跑
-            console.log("你溜了")
+            mwi?.game?.updateNotifications("info",'你偷偷地逃离了战场');
             document.querySelector(".DialogModal_buttonContainer__2lIyK .Button_button__1Fe9z.Button_success__6d6kU.Button_fullWidth__17pVU")?.click();
         }, 1000);
     }
@@ -768,6 +768,7 @@
     function startEscapeFromBattle() {
         //显示倒计时
         if (escapeTimer) {//已经在跑了
+            mwi?.game?.updateNotifications("info",`你取消了逃跑`);
             clearInterval(escapeTimer);
             escapeTimer = null;
             let autoEscapeButton = document.querySelector("#autoEscapeButton");
@@ -776,6 +777,7 @@
                 autoEscapeButton.innerText = "秒后自动逃跑";
             }
         } else {//
+            mwi?.game?.updateNotifications("info",`将在${escapeRemainSeconds}秒后逃跑`);
             escapeTimer = setInterval(() => {
                 console.log(`逃跑倒计时${escapeRemainSeconds}`);
 
