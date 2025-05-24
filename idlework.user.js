@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.30
+// @version      2.3.31
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -798,6 +798,7 @@
     }
 
     setInterval(() => {
+        //自动逃跑按钮
         let autoEscapeButton = document.querySelector("#autoEscapeButton");
         if (autoEscapeButton) return;//有了
 
@@ -829,6 +830,11 @@
 
             document.querySelector(".BattlePanel_buttonsContainer__lNrk1 .Button_button__1Fe9z.Button_warning__1-AMI").parentNode.parentNode.appendChild(autoEscapeDiv);
         }
-
+        //自动检测面板
+        let actionDiv = document.querySelector("div.SkillActionDetail_regularComponent__3oCgr");
+        if(!actionDiv){
+            clientQueueOn = false;
+            clientQueueDecOn = false;
+        }
     }, 1000);
 })();
