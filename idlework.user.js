@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.33
+// @version      2.3.34
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
@@ -58,8 +58,7 @@
     let clientData = localStorage.getItem("initClientData");
     if (clientData) {
         let decData = LZString.decompressFromUTF16(clientData);
-        obj = JSON.parse(decData);
-        const obj = JSON.parse(localStorage.getItem("initClientData"));
+        let obj = JSON.parse(decData);
         initData_actionDetailMap = obj.actionDetailMap;
         initData_itemDetailMap = obj.itemDetailMap;
         initData_houseRoomDetailMap = obj.houseRoomDetailMap;
