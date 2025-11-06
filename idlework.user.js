@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         MWIdleWork
 // @namespace    http://tampermonkey.net/
-// @version      2.3.34
+// @version      2.3.35
 // @description  闲时工作队列 milky way idle 银河 奶牛
 // @author       io
 // @match        https://www.milkywayidle.com/*
+// @match        https://www.milkywayidlecn.com/*
 // @match        https://test.milkywayidle.com/*
+// @match        https://test.milkywayidlecn.com/*
 // @require      https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js
 // @grant        GM_notification
 // @license      MIT
@@ -181,7 +183,12 @@
         var oriSend = WebSocket.prototype.send;
         var socket = null;
         WebSocket.prototype.send = function (data) {
-            if (this.url.indexOf("api.milkywayidle.com/ws") <= -1 && this.url.indexOf("api-test.milkywayidle.com/ws") <= -1) {
+            if (
+                this.url.indexOf("api.milkywayidlecn.com/ws") <= -1
+                && this.url.indexOf("api-test.milkywayidlecn.com/ws") <= -1
+                && this.url.indexOf("api.milkywayidle.com/ws") <= -1
+                && this.url.indexOf("api-test.milkywayidle.com/ws") <= -1
+            ) {
                 oriSend.call(this, data);
                 return;
             }
@@ -428,7 +435,10 @@
             if (!(socket instanceof WebSocket)) {
                 return oriGet.call(this);
             }
-            if (socket.url.indexOf("api.milkywayidle.com/ws") <= -1 && socket.url.indexOf("api-test.milkywayidle.com/ws") <= -1) {
+            if (socket.url.indexOf("api.milkywayidlecn.com/ws") <= -1
+                && socket.url.indexOf("api-test.milkywayidlecn.com/ws") <= -1
+                && socket.url.indexOf("api.milkywayidle.com/ws") <= -1
+                && socket.url.indexOf("api-test.milkywayidle.com/ws") <= -1) {
                 return oriGet.call(this);
             }
 
@@ -762,7 +772,7 @@
         escapeButton?.click();
         setTimeout(() => {
             //确定逃跑
-            mwi?.game?.updateNotifications("info",'你偷偷地逃离了战场');
+            mwi?.game?.updateNotifications("info", '你偷偷地逃离了战场');
             document.querySelector(".DialogModal_buttonContainer__2lIyK .Button_button__1Fe9z.Button_success__6d6kU.Button_fullWidth__17pVU")?.click();
         }, 1000);
     }
@@ -771,7 +781,7 @@
     function startEscapeFromBattle() {
         //显示倒计时
         if (escapeTimer) {//已经在跑了
-            mwi?.game?.updateNotifications("info",`你取消了逃跑`);
+            mwi?.game?.updateNotifications("info", `你取消了逃跑`);
             clearInterval(escapeTimer);
             escapeTimer = null;
             let autoEscapeButton = document.querySelector("#autoEscapeButton");
@@ -780,7 +790,7 @@
                 autoEscapeButton.innerText = "秒后自动逃跑";
             }
         } else {//
-            mwi?.game?.updateNotifications("info",`将在${escapeRemainSeconds}秒后逃跑`);
+            mwi?.game?.updateNotifications("info", `将在${escapeRemainSeconds}秒后逃跑`);
             escapeTimer = setInterval(() => {
                 console.log(`逃跑倒计时${escapeRemainSeconds}`);
 
@@ -835,7 +845,7 @@
         }
         //自动检测面板
         let actionDiv = document.querySelector("div.SkillActionDetail_regularComponent__3oCgr");
-        if(!actionDiv){
+        if (!actionDiv) {
             clientQueueOn = false;
             clientQueueDecOn = false;
         }
